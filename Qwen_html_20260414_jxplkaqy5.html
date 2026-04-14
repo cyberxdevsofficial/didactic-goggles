@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anuga SMM Panel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .loader { border-top-color: #3498db; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden-section { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <!-- ================= AUTH SECTION ================= -->
+    <div id="auth-section" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-800">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold text-indigo-700">Anuga SMM</h1>
+                <p class="text-gray-500">Premium Social Media Services</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <h2 class="text-xl font-semibold mb-4">Login to Account</h2>
+                <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border rounded mb-3 focus:outline-none focus:border-indigo-500">
+                <input type="password" id="password" placeholder="Password" class="w-full p-3 border rounded mb-4 focus:outline-none focus:border-indigo-500">
+                
+                <button onclick="handleEmailLogin()" class="w-full bg-indigo-600 text-white p-3 rounded hover:bg-indigo-700 transition mb-3">
+                    Login
+                </button>
+                
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink mx-4 text-gray-400">Or continue with</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <button onclick="handleGoogleLogin()" class="w-full border border-gray-300 bg-white text-gray-700 p-3 rounded hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+                    Sign in with Google
+                </button>
+                
+                <p class="mt-4 text-center text-sm">
+                    Don't have an account? <a href="#" onclick="toggleAuthMode()" class="text-indigo-600 hover:underline">Register</a>
+                </p>
+            </div>
+
+            <!-- Register Form (Hidden by default) -->
+            <div id="register-form" class="hidden-section">
+                <h2 class="text-xl font-semibold mb-4">Create Account</h2>
+                <input type="text" id="reg-name" placeholder="Full Name" class="w-full p-3 border rounded mb-3">
+                <input type="email" id="reg-email" placeholder="Email Address" class="w-full p-3 border rounded mb-3">
+                <input type="password" id="reg-password" placeholder="Password" class="w-full p-3 border rounded mb-4">
+                
+                <button onclick="handleRegister()" class="w-full bg-green-600 text-white p-3 rounded hover:bg-green-700 transition mb-3">
+                    Register
+                </button>
+                <p class="mt-4 text-center text-sm">
+                    Already have an account? <a href="#" onclick="toggleAuthMode()" class="text-indigo-600 hover:underline">Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= USER DASHBOARD ================= -->
+    <div id="user-dashboard" class="hidden-section min-h-screen flex flex-col">
+        <!-- Navbar -->
+        <nav class="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+            <div class="font-bold text-xl text-indigo-700">Anuga SMM</div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-sm font-bold" id="user-name-display">User</p>
+                    <p class="text-xs text-green-600 font-mono">Balance: $<span id="user-balance">0.00</span></p>
+                </div>
+                <button onclick="logout()" class="text-red-500 hover:text-red-700"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </nav>
+
+        <div class="flex flex-1">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-white shadow-r hidden md:block">
+                <ul class="p-4 space-y-2">
+                    <li onclick="showUserTab('new-order')" class="cursor-pointer p-3 rounded hover:bg-indigo-50 text-indigo-700 font-medium bg-indigo-50"><i class="fas fa-plus-circle mr-2"></i> New Order</li>
+                    <li onclick="showUserTab('orders')" class="cursor-pointer p-3 rounded hover:bg-indigo-50 text-gray-600"><i class="fas fa-list mr-2"></i> Orders History</li>
+                    <li onclick="showUserTab('add-funds')" class="cursor-pointer p-3 rounded hover:bg-indigo-50 text-gray-600"><i class="fas fa-wallet mr-2"></i> Add Funds</li>
+                </ul>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6 overflow-y-auto">
+                
+                <!-- New Order Tab -->
+                <div id="tab-new-order" class="user-tab">
+                    <h2 class="text-2xl font-bold mb-6">Place New Order</h2>
+                    <div class="bg-white p-6 rounded shadow max-w-2xl">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select id="order-category" onchange="loadServices()" class="w-full p-2 border rounded">
+                                <option value="">Select Category</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                            <select id="order-service" onchange="updateServiceDetails()" class="w-full p-2 border rounded">
+                                <option value="">Select Service</option>
+                            </select>
+                        </div>
+                        <div class="mb-4 p-3 bg-blue-50 text-blue-800 text-sm rounded hidden" id="service-desc-box">
+                            <p><strong>Rate:</strong> $<span id="service-rate">0</span> per 1000</p>
+                            <p><strong>Min:</strong> <span id="service-min">0</span> | <strong>Max:</strong> <span id="service-max">0</span></p>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Link</label>
+                            <input type="text" id="order-link" placeholder="https://..." class="w-full p-2 border rounded">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                            <input type="number" id="order-quantity" oninput="calculateTotal()" class="w-full p-2 border rounded">
+                        </div>
+                        <div class="mb-6 flex justify-between items-center">
+                            <span class="text-lg font-bold">Total Charge: $<span id="order-total">0.00</span></span>
+                            <button onclick="submitOrder()" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Submit Order</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders History Tab -->
+                <div id="tab-orders" class="user-tab hidden-section">
+                    <h2 class="text-2xl font-bold mb-6">Order History</h2>
+                    <div class="bg-white rounded shadow overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3">ID</th>
+                                    <th class="p-3">Service</th>
+                                    <th class="p-3">Link</th>
+                                    <th class="p-3">Qty</th>
+                                    <th class="p-3">Charge</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Add Funds Tab -->
+                <div id="tab-add-funds" class="user-tab hidden-section">
+                    <h2 class="text-2xl font-bold mb-6">Add Funds</h2>
+                    <div class="bg-white p-6 rounded shadow max-w-md">
+                        <p class="mb-4 text-gray-600">Payment Gateway integration required here. For demo, funds are added automatically by Admin.</p>
+                        <div class="p-4 border border-dashed border-gray-300 rounded text-center text-gray-500">
+                            Contact Admin to add funds manually.
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ================= ADMIN DASHBOARD ================= -->
+    <div id="admin-dashboard" class="hidden-section min-h-screen flex bg-gray-800 text-white">
+        <!-- Admin Sidebar -->
+        <aside class="w-64 bg-gray-900 p-4">
+            <h2 class="text-2xl font-bold text-indigo-400 mb-8">Admin Panel</h2>
+            <ul class="space-y-2">
+                <li onclick="showAdminTab('dashboard')" class="cursor-pointer p-2 hover:bg-gray-700 rounded">Dashboard Overview</li>
+                <li onclick="showAdminTab('manage-orders')" class="cursor-pointer p-2 hover:bg-gray-700 rounded">Manage Orders</li>
+                <li onclick="showAdminTab('manage-services')" class="cursor-pointer p-2 hover:bg-gray-700 rounded">Services & Products</li>
+                <li onclick="showAdminTab('manage-users')" class="cursor-pointer p-2 hover:bg-gray-700 rounded">Users</li>
+                <li onclick="logout()" class="cursor-pointer p-2 text-red-400 hover:bg-gray-700 rounded mt-10">Logout</li>
+            </ul>
+        </aside>
+
+        <!-- Admin Content -->
+        <main class="flex-1 p-8 bg-gray-800 overflow-y-auto">
+            
+            <!-- Admin Dashboard Stats -->
+            <div id="admin-tab-dashboard" class="admin-tab">
+                <h2 class="text-3xl font-bold mb-6">Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gray-700 p-6 rounded shadow">
+                        <h3 class="text-gray-400 text-sm">Total Earnings</h3>
+                        <p class="text-2xl font-bold text-green-400">$<span id="admin-earnings">0.00</span></p>
+                    </div>
+                    <div class="bg-gray-700 p-6 rounded shadow">
+                        <h3 class="text-gray-400 text-sm">Total Orders</h3>
+                        <p class="text-2xl font-bold text-blue-400" id="admin-total-orders">0</p>
+                    </div>
+                    <div class="bg-gray-700 p-6 rounded shadow">
+                        <h3 class="text-gray-400 text-sm">Active Users</h3>
+                        <p class="text-2xl font-bold text-purple-400" id="admin-total-users">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Orders -->
+            <div id="admin-tab-manage-orders" class="admin-tab hidden-section">
+                <h2 class="text-2xl font-bold mb-4">All Orders</h2>
+                <div class="bg-gray-700 rounded overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-900">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">User</th>
+                                <th class="p-3">Service</th>
+                                <th class="p-3">Link</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-orders-table">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Manage Services -->
+            <div id="admin-tab-manage-services" class="admin-tab hidden-section">
+                <h2 class="text-2xl font-bold mb-4">Services Management</h2>
+                <div class="bg-gray-700 p-4 rounded mb-4">
+                    <h3 class="font-bold mb-2">Add New Service</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="new-serv-name" placeholder="Service Name" class="p-2 rounded text-black">
+                        <input type="text" id="new-serv-cat" placeholder="Category (e.g. Instagram)" class="p-2 rounded text-black">
+                        <input type="number" id="new-serv-rate" placeholder="Rate per 1000" class="p-2 rounded text-black">
+                        <input type="number" id="new-serv-min" placeholder="Min Order" class="p-2 rounded text-black">
+                        <input type="number" id="new-serv-max" placeholder="Max Order" class="p-2 rounded text-black">
+                    </div>
+                    <button onclick="addService()" class="mt-4 bg-green-500 px-4 py-2 rounded hover:bg-green-600">Add Service</button>
+                </div>
+                <div id="services-list-admin" class="space-y-2">
+                    <!-- List of services -->
+                </div>
+            </div>
+
+             <!-- Manage Users -->
+             <div id="admin-tab-manage-users" class="admin-tab hidden-section">
+                <h2 class="text-2xl font-bold mb-4">User Management</h2>
+                <div class="bg-gray-700 rounded overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-900">
+                            <tr>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">Email</th>
+                                <th class="p-3">Balance</th>
+                                <th class="p-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-table">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= FIREBASE & LOGIC ================= -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDadg0KV2mMTwNka7ejAXeMlcP5eEoWOKc",
+            authDomain: "smmpanel-8120d.firebaseapp.com",
+            projectId: "smmpanel-8120d",
+            storageBucket: "smmpanel-8120d.firebasestorage.app",
+            messagingSenderId: "782051496425",
+            appId: "1:782051496425:web:0cc37472dd5d0581267b78"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // Global State
+        let currentUser = null;
+        let userData = null;
+        let allServices = [];
+
+        // --- AUTHENTICATION LOGIC ---
+
+        window.handleGoogleLogin = async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                await checkOrCreateUser(result.user);
+            } catch (error) {
+                alert("Login Failed: " + error.message);
+            }
+        };
+
+        window.handleEmailLogin = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                alert("Login Error: " + error.message);
+            }
+        };
+
+        window.handleRegister = async () => {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-password').value;
+            
+            if(!name || !email || !pass) return alert("Fill all fields");
+
+            try {
+                const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+                // Create user document in Firestore
+                await setDoc(doc(db, "users", userCred.user.uid), {
+                    name: name,
+                    email: email,
+                    balance: 0,
+                    role: "user", // Default role
+                    createdAt: serverTimestamp()
+                });
+            } catch (error) {
+                alert("Registration Error: " + error.message);
+            }
+        };
+
+        window.logout = () => {
+            signOut(auth).then(() => {
+                location.reload();
+            });
+        };
+
+        window.toggleAuthMode = () => {
+            document.getElementById('login-form').classList.toggle('hidden-section');
+            document.getElementById('register-form').classList.toggle('hidden-section');
+        };
+
+        // Check if user exists in DB, if not create basic profile
+        async function checkOrCreateUser(user) {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            
+            if (!userSnap.exists()) {
+                await setDoc(userRef, {
+                    name: user.displayName || "User",
+                    email: user.email,
+                    balance: 0,
+                    role: "user",
+                    createdAt: serverTimestamp()
+                });
+            }
+        }
+
+        // Auth State Observer
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // Fetch User Data Realtime
+                onSnapshot(doc(db, "users", user.uid), (doc) => {
+                    userData = doc.data();
+                    document.getElementById('user-name-display').innerText = userData.name;
+                    document.getElementById('user-balance').innerText = userData.balance.toFixed(2);
+                    
+                    // Route to Dashboard
+                    document.getElementById('auth-section').classList.add('hidden-section');
+                    
+                    if (userData.role === 'admin') {
+                        document.getElementById('admin-dashboard').classList.remove('hidden-section');
+                        loadAdminData();
+                    } else {
+                        document.getElementById('user-dashboard').classList.remove('hidden-section');
+                        loadUserServices();
+                        loadUserOrders();
+                    }
+                });
+            } else {
+                document.getElementById('auth-section').classList.remove('hidden-section');
+                document.getElementById('user-dashboard').classList.add('hidden-section');
+                document.getElementById('admin-dashboard').classList.add('hidden-section');
+            }
+        });
+
+        // --- USER PANEL LOGIC ---
+
+        async function loadUserServices() {
+            const querySnapshot = await getDocs(collection(db, "services"));
+            allServices = [];
+            const categories = new Set();
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                data.id = doc.id;
+                allServices.push(data);
+                categories.add(data.category);
+            });
+
+            // Populate Category Dropdown
+            const catSelect = document.getElementById('order-category');
+            catSelect.innerHTML = '<option value="">Select Category</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                catSelect.appendChild(opt);
+            });
+        }
+
+        window.loadServices = () => {
+            const cat = document.getElementById('order-category').value;
+            const servSelect = document.getElementById('order-service');
+            servSelect.innerHTML = '<option value="">Select Service</option>';
+            
+            const filtered = allServices.filter(s => s.category === cat);
+            filtered.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.innerText = s.name;
+                // Store data in dataset for easy access
+                opt.dataset.rate = s.rate;
+                opt.dataset.min = s.min;
+                opt.dataset.max = s.max;
+                servSelect.appendChild(opt);
+            });
+        };
+
+        window.updateServiceDetails = () => {
+            const select = document.getElementById('order-service');
+            const option = select.options[select.selectedIndex];
+            
+            if(option.value) {
+                document.getElementById('service-desc-box').classList.remove('hidden');
+                document.getElementById('service-rate').innerText = option.dataset.rate;
+                document.getElementById('service-min').innerText = option.dataset.min;
+                document.getElementById('service-max').innerText = option.dataset.max;
+                calculateTotal();
+            } else {
+                document.getElementById('service-desc-box').classList.add('hidden');
+            }
+        };
+
+        window.calculateTotal = () => {
+            const select = document.getElementById('order-service');
+            const option = select.options[select.selectedIndex];
+            const qty = document.getElementById('order-quantity').value;
+            
+            if(option && option.dataset.rate && qty) {
+                const total = (option.dataset.rate * qty) / 1000;
+                document.getElementById('order-total').innerText = total.toFixed(4);
+            } else {
+                document.getElementById('order-total').innerText = "0.00";
+            }
+        };
+
+        window.submitOrder = async () => {
+            const select = document.getElementById('order-service');
+            const link = document.getElementById('order-link').value;
+            const qty = parseInt(document.getElementById('order-quantity').value);
+            const option = select.options[select.selectedIndex];
+
+            if(!option.value || !link || !qty) return alert("Please fill all fields");
+
+            const rate = parseFloat(option.dataset.rate);
+            const min = parseInt(option.dataset.min);
+            const max = parseInt(option.dataset.max);
+            const charge = (rate * qty) / 1000;
+
+            if(qty < min || qty > max) return alert(`Quantity must be between ${min} and ${max}`);
+            if(userData.balance < charge) return alert("Insufficient Balance!");
+
+            try {
+                // Deduct Balance
+                const newBalance = userData.balance - charge;
+                await updateDoc(doc(db, "users", currentUser.uid), { balance: newBalance });
+
+                // Create Order
+                await addDoc(collection(db, "orders"), {
+                    userId: currentUser.uid,
+                    userName: userData.name,
+                    serviceId: option.value,
+                    serviceName: option.innerText,
+                    category: document.getElementById('order-category').value,
+                    link: link,
+                    quantity: qty,
+                    charge: charge,
+                    status: "Pending",
+                    date: serverTimestamp()
+                });
+
+                alert("Order Placed Successfully!");
+                location.reload(); // Refresh to update balance and list
+            } catch (e) {
+                console.error(e);
+                alert("Error placing order");
+            }
+        };
+
+        function loadUserOrders() {
+            const q = query(collection(db, "orders"), where("userId", "==", currentUser.uid), orderBy("date", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('orders-table-body');
+                tbody.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const o = doc.data();
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 text-sm text-gray-500">#${doc.id.substr(0,5)}</td>
+                            <td class="p-3">${o.serviceName}</td>
+                            <td class="p-3 text-blue-500 truncate max-w-xs"><a href="${o.link}" target="_blank">Link</a></td>
+                            <td class="p-3">${o.quantity}</td>
+                            <td class="p-3">$${o.charge.toFixed(2)}</td>
+                            <td class="p-3"><span class="px-2 py-1 rounded text-xs ${getStatusColor(o.status)}">${o.status}</span></td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            });
+        }
+
+        window.showUserTab = (tabName) => {
+            document.querySelectorAll('.user-tab').forEach(el => el.classList.add('hidden-section'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden-section');
+        };
+
+        // --- ADMIN PANEL LOGIC ---
+
+        function loadAdminData() {
+            // Load Stats
+            onSnapshot(collection(db, "orders"), (snap) => {
+                let earnings = 0;
+                let count = 0;
+                const tbody = document.getElementById('admin-orders-table');
+                tbody.innerHTML = "";
+
+                snap.forEach(doc => {
+                    const o = doc.data();
+                    earnings += o.charge;
+                    count++;
+                    
+                    // Populate Table
+                    const row = `
+                        <tr class="border-b border-gray-600 hover:bg-gray-600">
+                            <td class="p-3">#${doc.id.substr(0,5)}</td>
+                            <td class="p-3">${o.userName}</td>
+                            <td class="p-3">${o.serviceName}</td>
+                            <td class="p-3 text-xs truncate max-w-[150px]"><a href="${o.link}" class="text-blue-300">View</a></td>
+                            <td class="p-3">
+                                <select onchange="updateOrderStatus('${doc.id}', this.value)" class="bg-gray-800 border border-gray-500 rounded p-1 text-sm">
+                                    <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                                    <option value="Completed" ${o.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-xs text-gray-400">${new Date(o.date?.seconds * 1000).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+                document.getElementById('admin-earnings').innerText = earnings.toFixed(2);
+                document.getElementById('admin-total-orders').innerText = count;
+            });
+
+            // Load Users
+            onSnapshot(collection(db, "users"), (snap) => {
+                document.getElementById('admin-total-users').innerText = snap.size;
+                const tbody = document.getElementById('admin-users-table');
+                tbody.innerHTML = "";
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    tbody.innerHTML += `
+                        <tr class="border-b border-gray-600">
+                            <td class="p-3">${u.name}</td>
+                            <td class="p-3">${u.email}</td>
+                            <td class="p-3">$${u.balance.toFixed(2)}</td>
+                            <td class="p-3">
+                                <button onclick="alert('Feature: Add logic to edit user balance')" class="text-blue-400 hover:text-white">Edit</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            // Load Services for Admin List
+            onSnapshot(collection(db, "services"), (snap) => {
+                const div = document.getElementById('services-list-admin');
+                div.innerHTML = "";
+                snap.forEach(doc => {
+                    const s = doc.data();
+                    div.innerHTML += `
+                        <div class="bg-gray-800 p-3 rounded flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-indigo-300">[${s.category}]</span> ${s.name} - $${s.rate}/1k
+                            </div>
+                            <button onclick="deleteService('${doc.id}')" class="text-red-400 hover:text-red-200"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        window.updateOrderStatus = async (orderId, status) => {
+            await updateDoc(doc(db, "orders", orderId), { status: status });
+        };
+
+        window.addService = async () => {
+            const name = document.getElementById('new-serv-name').value;
+            const cat = document.getElementById('new-serv-cat').value;
+            const rate = parseFloat(document.getElementById('new-serv-rate').value);
+            const min = parseInt(document.getElementById('new-serv-min').value);
+            const max = parseInt(document.getElementById('new-serv-max').value);
+
+            if(!name || !cat || !rate) return alert("Fill all fields");
+
+            await addDoc(collection(db, "services"), {
+                name, category: cat, rate, min, max
+            });
+            
+            alert("Service Added");
+            // Clear inputs
+            document.getElementById('new-serv-name').value = "";
+        };
+
+        window.deleteService = async (id) => {
+            if(confirm("Delete this service?")) {
+                // Note: In production, ensure you have rules to allow delete
+                // For now, this might fail if security rules are strict
+                alert("To delete, ensure Firestore rules allow it. ID: " + id);
+            }
+        };
+
+        window.showAdminTab = (tab) => {
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden-section'));
+            document.getElementById('admin-tab-' + tab).classList.remove('hidden-section');
+        };
+
+        // Helper
+        function getStatusColor(status) {
+            if(status === 'Completed') return 'bg-green-100 text-green-800';
+            if(status === 'Pending') return 'bg-yellow-100 text-yellow-800';
+            if(status === 'Cancelled') return 'bg-red-100 text-red-800';
+            return 'bg-blue-100 text-blue-800';
+        }
+
+    </script>
+</body>
+</html>
